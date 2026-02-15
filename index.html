@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Infinite Counter</title>
+        <style>
+        html { font: 120px sans-serif; }
+        body { margin: 0; padding: 1rem; }
+        .container { margin: 0 auto; text-align: center; }
+        button, input { font-size: 0.4rem; }
+        input { width: 8em; text-align: center; }
+        </style>
+    </head>
+    <body>
+        <div class=container>
+            <div id=counter></div>
+            <input type=text id=increment_field value=1>
+        </div>
+        <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            let currentValue = 0;
+            const format = Intl.NumberFormat();
+
+            const counterDiv = document.getElementById("counter");
+            const incrementField = document.getElementById("increment_field");
+
+            function getIncrementValue() {
+                let incrementValue = parseInt(incrementField.value);
+                console.log(`parseInt result: ${incrementValue}`);
+                if (Number.isNaN(incrementValue)) incrementValue = 0;
+                console.log(`after: ${incrementValue}`);
+                return incrementValue;
+            }
+
+            function updateCurrentValue(newValue) {
+                currentValue = newValue;
+                counterDiv.innerText = format.format(currentValue);
+            }
+
+            function addToValue(mult) {
+                updateCurrentValue(currentValue + getIncrementValue() * mult);
+            }
+
+            function multiplyValue() {
+                updateCurrentValue(currentValue * getIncrementValue());
+            }
+
+            function divideValue() {
+                updateCurrentValue(Math.round(currentValue / getIncrementValue()));
+            }
+
+            addToValue(0);
+
+            document.addEventListener("keydown", function (e) {
+                console.log(e.code, e.key);
+                switch (e.key) {
+                    case "0":
+                    case "1":
+                    case "2":
+                    case "3":
+                    case "4":
+                    case "5":
+                    case "6":
+                    case "7":
+                    case "8":
+                    case "9":
+                        break;
+                    case "=":
+                    case "+":
+                        addToValue(1);
+                        e.preventDefault();
+                        break;
+                    case "-":
+                        addToValue(-1);
+                        e.preventDefault();
+                        break;
+                    case "*":
+                        multiplyValue();
+                        e.preventDefault();
+                        break;
+                    case "/":
+                        divideValue();
+                        e.preventDefault();
+                        break;
+                }
+            });				
+        });
+        </script>
+    </body>
+</html>
