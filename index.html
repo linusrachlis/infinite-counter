@@ -3,17 +3,30 @@
     <head>
         <title>Infinite Counter</title>
         <style>
-        html { font: 120px sans-serif; }
-        body { margin: 0; padding: 1rem; }
-        .container { margin: 0 auto; text-align: center; }
-        button, input { font-size: 0.4rem; }
-        input { width: 8em; text-align: center; }
+	html { font: 48px sans-serif; }
+        body { font-size: 1rem; margin: 0; padding: 1em; }
+        .container {
+		margin: 0 auto;
+		text-align: center;
+		>div { margin: 1rem 0; }
+	}
+	#counter { height: 100vw; }
+	button { width: 2em; font-size: 1rem; }
+        input { width: 8em; text-align: center; font-size: 1rem; }
         </style>
     </head>
     <body>
         <div class=container>
             <div id=counter></div>
-            <input type=text id=increment_field value=1>
+	    <div class=buttons>
+		    <button id=button_plus>+</button>
+		    <button id=button_minus>-</button>
+		    <button id=button_times>&times;</button>
+		    <button id=button_divide>&divide;</button>
+		</div>
+	    <div class=increment>
+		    <input type=text id=increment_field value=1>
+		</div>
         </div>
         <script>
         document.addEventListener("DOMContentLoaded", function () {
@@ -21,19 +34,23 @@
             const format = Intl.NumberFormat();
 
             const counterDiv = document.getElementById("counter");
+	const plusButton = document.getElementById("button_plus");
+	const minusButton = document.getElementById("button_minus");
+	const timesButton = document.getElementById("button_times");
+	const divideButton = document.getElementById("button_divide");
             const incrementField = document.getElementById("increment_field");
 
             function getIncrementValue() {
                 let incrementValue = parseInt(incrementField.value);
-                console.log(`parseInt result: ${incrementValue}`);
                 if (Number.isNaN(incrementValue)) incrementValue = 0;
-                console.log(`after: ${incrementValue}`);
                 return incrementValue;
             }
 
             function updateCurrentValue(newValue) {
                 currentValue = newValue;
                 counterDiv.innerText = format.format(currentValue);
+		const vwRatio = 130 / counterDiv.innerText.length;
+				    counterDiv.style.fontSize = `${vwRatio}vw`;
             }
 
             function addToValue(mult) {
@@ -49,6 +66,23 @@
             }
 
             addToValue(0);
+
+	document.addEventListener("click", function (e) {
+	switch (e.target) {
+		case plusButton:
+			addToValue(1);
+			break;
+		case minusButton:
+			addToValue(-1);
+			break;
+		case timesButton:
+			multiplyValue();
+			break;
+		case divideButton:
+			divideValue();
+			break;
+			}
+	});
 
             document.addEventListener("keydown", function (e) {
                 console.log(e.code, e.key);
