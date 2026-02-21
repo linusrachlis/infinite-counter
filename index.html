@@ -3,6 +3,8 @@
 
 <head>
     <title>Infinite Counter</title>
+    <meta charset=utf8>
+    <meta name=viewport content="width=device-width; initial-scale=1">
     <style>
         html {
             font: 48px sans-serif;
@@ -54,6 +56,7 @@
         </div>
     </div>
     <script>
+        "use strict";
         document.addEventListener("DOMContentLoaded", function () {
             let currentValue = 0;
             const format = Intl.NumberFormat();
