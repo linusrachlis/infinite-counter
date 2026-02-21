@@ -1,43 +1,68 @@
 <!doctype html>
 <html>
-    <head>
-        <title>Infinite Counter</title>
-        <style>
-	html { font: 48px sans-serif; }
-        body { font-size: 1rem; margin: 0; padding: 1em; }
+
+<head>
+    <title>Infinite Counter</title>
+    <style>
+        html {
+            font: 48px sans-serif;
+        }
+
+        body {
+            font-size: 1rem;
+            margin: 0;
+            padding: 1em;
+        }
+
         .container {
-		margin: 0 auto;
-		text-align: center;
-		>div { margin: 1rem 0; }
-	}
-	#counter { height: 100vw; }
-	button { width: 2em; font-size: 1rem; }
-        input { width: 8em; text-align: center; font-size: 1rem; }
-        </style>
-    </head>
-    <body>
-        <div class=container>
-            <div id=counter></div>
-	    <div class=buttons>
-		    <button id=button_plus>+</button>
-		    <button id=button_minus>-</button>
-		    <button id=button_times>&times;</button>
-		    <button id=button_divide>&divide;</button>
-		</div>
-	    <div class=increment>
-		    <input type=text id=increment_field value=1>
-		</div>
+            margin: 0 auto;
+            text-align: center;
+
+            >div {
+                margin: 1rem 0;
+            }
+        }
+
+        #counter {
+            height: 100vw;
+        }
+
+        button {
+            width: 2em;
+            font-size: 1rem;
+        }
+
+        input {
+            width: 8em;
+            text-align: center;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class=container>
+        <div id=counter></div>
+        <div class=buttons>
+            <button id=button_plus>+</button>
+            <button id=button_minus>-</button>
+            <button id=button_times>&times;</button>
+            <button id=button_divide>&divide;</button>
         </div>
-        <script>
+        <div class=increment>
+            <input type=text id=increment_field value=1>
+        </div>
+    </div>
+    <script>
         document.addEventListener("DOMContentLoaded", function () {
             let currentValue = 0;
             const format = Intl.NumberFormat();
 
             const counterDiv = document.getElementById("counter");
-	const plusButton = document.getElementById("button_plus");
-	const minusButton = document.getElementById("button_minus");
-	const timesButton = document.getElementById("button_times");
-	const divideButton = document.getElementById("button_divide");
+            const plusButton = document.getElementById("button_plus");
+            const minusButton = document.getElementById("button_minus");
+            const timesButton = document.getElementById("button_times");
+            const divideButton = document.getElementById("button_divide");
             const incrementField = document.getElementById("increment_field");
 
             function getIncrementValue() {
@@ -49,8 +74,8 @@
             function updateCurrentValue(newValue) {
                 currentValue = newValue;
                 counterDiv.innerText = format.format(currentValue);
-		const vwRatio = 130 / counterDiv.innerText.length;
-				    counterDiv.style.fontSize = `${vwRatio}vw`;
+                const vwRatio = 130 / counterDiv.innerText.length;
+                counterDiv.style.fontSize = `${vwRatio}vw`;
             }
 
             function addToValue(mult) {
@@ -67,22 +92,22 @@
 
             addToValue(0);
 
-	document.addEventListener("click", function (e) {
-	switch (e.target) {
-		case plusButton:
-			addToValue(1);
-			break;
-		case minusButton:
-			addToValue(-1);
-			break;
-		case timesButton:
-			multiplyValue();
-			break;
-		case divideButton:
-			divideValue();
-			break;
-			}
-	});
+            document.addEventListener("click", function (e) {
+                switch (e.target) {
+                    case plusButton:
+                        addToValue(1);
+                        break;
+                    case minusButton:
+                        addToValue(-1);
+                        break;
+                    case timesButton:
+                        multiplyValue();
+                        break;
+                    case divideButton:
+                        divideValue();
+                        break;
+                }
+            });
 
             document.addEventListener("keydown", function (e) {
                 console.log(e.code, e.key);
@@ -116,8 +141,9 @@
                         e.preventDefault();
                         break;
                 }
-            });				
+            });
         });
-        </script>
-    </body>
+    </script>
+</body>
+
 </html>
