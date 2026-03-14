@@ -21,20 +21,20 @@
         }
 
         @keyframes disappear-up {
-            from { top: 0; opacity: 1; }
-            to { top: -100%; opacity: 0; }
+            from { transform: translateY(0); opacity: 1; }
+            to { transform: translateY(-100%); opacity: 0; }
         }
         @keyframes disappear-down {
-            from { top: 0; opacity: 1; }
-            to { top: 100%; opacity: 0; }
+            from { transform: translateY(0); opacity: 1; }
+            to { transform: translateY(100%); opacity: 0; }
         }
         @keyframes appear-up {
-            from { top: 100%; opacity: 0; }
-            to { top: 0; opacity: 1; }
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         @keyframes appear-down {
-            from { top: -100%; opacity: 0; }
-            to { top: 0; opacity: 1; }
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
         .container {
@@ -45,31 +45,30 @@
             display: flex;
             flex-direction: column;
 
-            .counter-container {
-                padding-top: 25vh;
+            #counter-container {
+                padding-top: 24vh;
                 flex-grow: 1;
                 font-family: monospace;
 
-                #counter {
+                > div { /* Digit group */
                     display: flex;
                     flex-direction: row;
-                    font-size: 25vh;
+                    justify-content: center;
+                    font-size: 16vw;
+                    animation-duration: 300ms;
+                    animation-fill-mode: forwards;
+                    position: absolute;
+                    right: 0;
 
-                    >.digit {
-                        position: relative;
-                        animation-duration: 0.2s;
-                        animation-fill-mode: forwards;
-
-                        &.increment-leaving { animation-name: disappear-up; }
-                        &.increment-entering { animation-name: appear-up; }
-                        &.decrement-leaving { animation-name: disappear-down; }
-                        &.decrement-entering { animation-name: appear-down; }
-                    }
+                    &.increment-leaving { animation-name: disappear-up; }
+                    &.increment-entering { animation-name: appear-up; }
+                    &.decrement-leaving { animation-name: disappear-down; }
+                    &.decrement-entering { animation-name: appear-down; }
                 }
             }
 
-
             .buttons {
+                padding: 1em 0;
                 button {
                     width: 2em;
                     font-size: 1rem;
@@ -77,6 +76,7 @@
             }
 
             .increment {
+                padding: 1em 0;
                 input {
                     width: 8em;
                     text-align: center;
@@ -89,9 +89,7 @@
 
 <body>
     <div class=container>
-        <div class=counter-container>
-            <div id=counter></div>
-        </div>
+        <div id=counter-container></div>
         <div class=buttons>
             <button id=button_plus>+</button>
             <button id=button_minus>-</button>
@@ -112,7 +110,7 @@
             const minDelayMs = 50;
             const format = Intl.NumberFormat();
 
-            const counterDiv = document.getElementById("counter");
+            const counterContainer = document.getElementById("counter-container");
             const plusButton = document.getElementById("button_plus");
             const minusButton = document.getElementById("button_minus");
             const timesButton = document.getElementById("button_times");
@@ -125,57 +123,66 @@
                 return incrementValue;
             }
 
-            function createDigitElement(innerText, leftShiftAmount) {
-                const element = document.createElement("div");
-                element.classList.add("digit");
-                element.style.transform = `translateX(${leftShiftAmount * -100}%)`;
-                element.innerText = innerText;
+            function createElementWithTextContent(tagName, textContent) {
+                const element = document.createElement(tagName);
+                element.innerHTML = textContent;
                 return element;
             }
 
             function updateCurrentValue(newValue) {
-                const oldDigits = currentValue.toString().split("");
-                const newDigits = newValue.toString().split("");
-                let cumulativeLeftShiftAmount = 0; // number of digits
-                const animiationClassPrefix = newValue > currentValue ? "increment" : "decrement";
+                // TODO: handle negative sign separately when number length is
+                // changing (maybe have it slide over)
 
-                // TODO: more efficient to call replace() or sth?
-                counterDiv.innerHTML = "";
+                // We reverse the digit arrays because we want to compare them
+                // from lowest to highest place
+                const oldDigits = currentValue.toString().split("").reverse();
+                const newDigits = newValue.toString().split("").reverse();
+
+                // These 3 arrays must be kept the same size
+                const digitsLeaving = [];
+                const digitsStaying = [];
+                const digitsEntering = [];
 
                 for (let i = 0; i < newDigits.length; i++) {
-                    const newDigitElem = createDigitElement(newDigits[i], cumulativeLeftShiftAmount);
-
                     if (i < oldDigits.length) {
-                        // There is a digit in the same place
+                        // There is a previous digit in the same place
                         if (oldDigits[i] === newDigits[i]) {
-                            // It's the same digit
-                            counterDiv.appendChild(newDigitElem);
+                            // It's the same digit, so it's staying
+                            digitsLeaving.unshift("&nbsp;");
+                            digitsStaying.unshift(newDigits[i]);
+                            digitsEntering.unshift("&nbsp;");
                         } else {
-                            // Digit is being replaced
-                            cumulativeLeftShiftAmount++;
-                            const oldDigitElem = createDigitElement(oldDigits[i], cumulativeLeftShiftAmount);
-
-                            newDigitElem.classList.add(`${animiationClassPrefix}-entering`);
-                            oldDigitElem.classList.add(`${animiationClassPrefix}-leaving`);
-
-                            counterDiv.appendChild(newDigitElem);
-                            counterDiv.appendChild(oldDigitElem);
+                            // Digit is being replaced, so add old digit to
+                            // leaving group and new digit to entering group
+                            digitsLeaving.unshift(oldDigits[i]);
+                            digitsStaying.unshift("&nbsp;");
+                            digitsEntering.unshift(newDigits[i]);
                         }
                     } else {
-                        // The number grew to a new length, nothing to compare
-                        newDigitElem.classList.add("increment-entering");
-                        counterDiv.appendChild(newDigitElem);
+                        // There is no previous digit in the same place, so add
+                        // new digit to the entering group
+                        digitsLeaving.unshift("&nbsp;");
+                        digitsStaying.unshift("&nbsp;");
+                        digitsEntering.unshift(newDigits[i]);
                     }
                 }
                 for (let i = newDigits.length; i < oldDigits.length; i++) {
-                    // If the number shrunk to a shorter length, animate the
-                    // old digits that are on their way out
-                    const oldDigitElem = createDigitElement(oldDigits[i], cumulativeLeftShiftAmount);
-                    // FIXME: -leaving assumption breaks for negative numbers
-                    oldDigitElem.classList.add(`${animiationClassPrefix}-leaving`);
-                    counterDiv.appendChild(oldDigitElem);
+                    // If the number shrunk to a shorter length (i.e. oldDigits
+                    // is longer than newDigits), add remaining oldDigits to
+                    // the leaving group.
+                    digitsLeaving.unshift(oldDigits[i]);
+                    digitsStaying.unshift("&nbsp;");
+                    digitsEntering.unshift("&nbsp;");
                 }
 
+                const animationClassPrefix = newValue > currentValue ? "increment" : "decrement";
+                const digitsEnteringElem = createElementWithTextContent("div", digitsEntering.join(""));
+                digitsEnteringElem.classList.add(`${animationClassPrefix}-entering`);
+                const digitsStayingElem = createElementWithTextContent("div", digitsStaying.join(""));
+                const digitsLeavingElem = createElementWithTextContent("div", digitsLeaving.join(""));
+                digitsLeavingElem.classList.add(`${animationClassPrefix}-leaving`);
+
+                counterContainer.replaceChildren(digitsEnteringElem, digitsStayingElem, digitsLeavingElem);
                 currentValue = newValue;
             }
 
