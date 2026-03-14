@@ -7,44 +7,91 @@
     <meta name=viewport content="width=device-width; initial-scale=1">
     <style>
         html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
             font: 48px sans-serif;
         }
 
         body {
-            font-size: 1rem;
+            height: 100%;
             margin: 0;
-            padding: 1em;
+            padding: 0;
+            font-size: 1rem;
+        }
+
+        @keyframes disappear-up {
+            from { top: 0; opacity: 1; }
+            to { top: -100%; opacity: 0; }
+        }
+        @keyframes disappear-down {
+            from { top: 0; opacity: 1; }
+            to { top: 100%; opacity: 0; }
+        }
+        @keyframes appear-up {
+            from { top: 100%; opacity: 0; }
+            to { top: 0; opacity: 1; }
+        }
+        @keyframes appear-down {
+            from { top: -100%; opacity: 0; }
+            to { top: 0; opacity: 1; }
         }
 
         .container {
+            height: 100%;
             margin: 0 auto;
             text-align: center;
 
-            >div {
-                margin: 1rem 0;
+            display: flex;
+            flex-direction: column;
+
+            .counter-container {
+                padding-top: 25vh;
+                flex-grow: 1;
+                font-family: monospace;
+
+                #counter {
+                    display: flex;
+                    flex-direction: row;
+                    font-size: 25vh;
+
+                    >.digit {
+                        position: relative;
+                        animation-duration: 0.2s;
+                        animation-fill-mode: forwards;
+
+                        &.increment-leaving { animation-name: disappear-up; }
+                        &.increment-entering { animation-name: appear-up; }
+                        &.decrement-leaving { animation-name: disappear-down; }
+                        &.decrement-entering { animation-name: appear-down; }
+                    }
+                }
             }
-        }
 
-        #counter {
-            height: 100vw;
-        }
 
-        button {
-            width: 2em;
-            font-size: 1rem;
-        }
+            .buttons {
+                button {
+                    width: 2em;
+                    font-size: 1rem;
+                }
+            }
 
-        input {
-            width: 8em;
-            text-align: center;
-            font-size: 1rem;
+            .increment {
+                input {
+                    width: 8em;
+                    text-align: center;
+                    font-size: 1rem;
+                }
+            }
         }
     </style>
 </head>
 
 <body>
     <div class=container>
-        <div id=counter></div>
+        <div class=counter-container>
+            <div id=counter></div>
+        </div>
         <div class=buttons>
             <button id=button_plus>+</button>
             <button id=button_minus>-</button>
@@ -78,11 +125,58 @@
                 return incrementValue;
             }
 
+            function createDigitElement(innerText, leftShiftAmount) {
+                const element = document.createElement("div");
+                element.classList.add("digit");
+                element.style.transform = `translateX(${leftShiftAmount * -100}%)`;
+                element.innerText = innerText;
+                return element;
+            }
+
             function updateCurrentValue(newValue) {
+                const oldDigits = currentValue.toString().split("");
+                const newDigits = newValue.toString().split("");
+                let cumulativeLeftShiftAmount = 0; // number of digits
+                const animiationClassPrefix = newValue > currentValue ? "increment" : "decrement";
+
+                // TODO: more efficient to call replace() or sth?
+                counterDiv.innerHTML = "";
+
+                for (let i = 0; i < newDigits.length; i++) {
+                    const newDigitElem = createDigitElement(newDigits[i], cumulativeLeftShiftAmount);
+
+                    if (i < oldDigits.length) {
+                        // There is a digit in the same place
+                        if (oldDigits[i] === newDigits[i]) {
+                            // It's the same digit
+                            counterDiv.appendChild(newDigitElem);
+                        } else {
+                            // Digit is being replaced
+                            cumulativeLeftShiftAmount++;
+                            const oldDigitElem = createDigitElement(oldDigits[i], cumulativeLeftShiftAmount);
+
+                            newDigitElem.classList.add(`${animiationClassPrefix}-entering`);
+                            oldDigitElem.classList.add(`${animiationClassPrefix}-leaving`);
+
+                            counterDiv.appendChild(newDigitElem);
+                            counterDiv.appendChild(oldDigitElem);
+                        }
+                    } else {
+                        // The number grew to a new length, nothing to compare
+                        newDigitElem.classList.add("increment-entering");
+                        counterDiv.appendChild(newDigitElem);
+                    }
+                }
+                for (let i = newDigits.length; i < oldDigits.length; i++) {
+                    // If the number shrunk to a shorter length, animate the
+                    // old digits that are on their way out
+                    const oldDigitElem = createDigitElement(oldDigits[i], cumulativeLeftShiftAmount);
+                    // FIXME: -leaving assumption breaks for negative numbers
+                    oldDigitElem.classList.add(`${animiationClassPrefix}-leaving`);
+                    counterDiv.appendChild(oldDigitElem);
+                }
+
                 currentValue = newValue;
-                counterDiv.innerText = format.format(currentValue);
-                const vwRatio = 130 / counterDiv.innerText.length;
-                counterDiv.style.fontSize = `${vwRatio}vw`;
             }
 
             function addToValue(mult) {
