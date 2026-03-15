@@ -3,10 +3,8 @@ document.addEventListener("DOMContentLoaded", function() {
     /**
      * Tracks the current amount for the purpose of the next requested
      * mathematical operation
-     *
-     * @type number
      */
-    let currentValue = 0;
+    let currentValue: number = 0;
 
     /**
         Track the currently displayed amount for the purpose of animating
@@ -14,17 +12,13 @@ document.addEventListener("DOMContentLoaded", function() {
         two values whose difference is >1).
 
         Initially null.
-
-        @type number?
      */
-    let transitionalValue = null;
+    let transitionalValue: number | null = null;
 
     /**
      * Gets unset when timeout cleared
-     *
-     * @type number?
      */
-    let transitionTimeoutId = null;
+    let transitionTimeoutId: number | null = null;
 
     const transitionStepDelayMs = 300;
     const middleTransitionStepDelayMs = 50;
@@ -34,11 +28,11 @@ document.addEventListener("DOMContentLoaded", function() {
     const minDelayMs = 50;
 
     const counterContainer = document.getElementById("counter-container");
-    const plusButton = document.getElementById("button_plus");
-    const minusButton = document.getElementById("button_minus");
-    const timesButton = document.getElementById("button_times");
-    const divideButton = document.getElementById("button_divide");
-    const incrementField = document.getElementById("increment_field");
+    const plusButton = <HTMLButtonElement>document.getElementById("button_plus");
+    const minusButton = <HTMLButtonElement>document.getElementById("button_minus");
+    const timesButton = <HTMLButtonElement>document.getElementById("button_times");
+    const divideButton = <HTMLButtonElement>document.getElementById("button_divide");
+    const incrementField = <HTMLInputElement>document.getElementById("increment_field");
 
     function getIncrementValue() {
         let incrementValue = parseInt(incrementField.value);
@@ -46,7 +40,7 @@ document.addEventListener("DOMContentLoaded", function() {
         return incrementValue;
     }
 
-    function createElementWithTextContent(tagName, textContent) {
+    function createElementWithTextContent(tagName: string, textContent: string) {
         const element = document.createElement(tagName);
         element.innerHTML = textContent;
         return element;
@@ -55,19 +49,14 @@ document.addEventListener("DOMContentLoaded", function() {
     /**
         Take transitionalValue one more step in the direction of the currentValue,
         and animate.
-
-        @param isFirstStep {boolean}
-
-        @return void
     */
-    function stepTowardsCurrentValue(isFirstStep) {
+    function stepTowardsCurrentValue(isFirstStep: boolean): void {
         // TODO: handle negative sign separately when number length is
         // changing (maybe have it slide over)
 
         // TODO: visualize discarding the remainder on division
 
-        /** @type number */
-        let nextValue;
+        let nextValue: number;
         if (transitionalValue === null) {
             // Initialization
             nextValue = transitionalValue = currentValue;
@@ -88,9 +77,9 @@ document.addEventListener("DOMContentLoaded", function() {
         const newDigits = nextValue.toString().split("").reverse();
 
         // These 3 arrays must be kept the same size
-        const digitsLeaving = [];
-        const digitsStaying = [];
-        const digitsEntering = [];
+        const digitsLeaving: string[] = [];
+        const digitsStaying: string[] = [];
+        const digitsEntering: string[] = [];
 
         for (let i = 0; i < newDigits.length; i++) {
             if (i < oldDigits.length) {
@@ -126,7 +115,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
         const animationClassPrefix = nextValue > transitionalValue ? "increment" : "decrement";
         const isLastStep = nextValue === currentValue;
-        const additionalClassNames = [];
+        const additionalClassNames: string[] = [];
 
         if (isFirstStep && isLastStep) {
             additionalClassNames.push("only-step");
@@ -165,30 +154,30 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    function updateCurrentValue(newValue) {
+    function updateCurrentValue(newValue: number): void {
         currentValue = newValue;
         if (transitionTimeoutId) clearTimeout(transitionTimeoutId);
         stepTowardsCurrentValue(true);
     }
 
-    function addToValue(mult) {
+    function addToValue(mult: number): void {
         updateCurrentValue(currentValue + getIncrementValue() * mult);
     }
 
-    function multiplyValue() {
+    function multiplyValue(): void {
         updateCurrentValue(currentValue * getIncrementValue());
     }
 
-    function divideValue() {
+    function divideValue(): void {
         updateCurrentValue(Math.round(currentValue / getIncrementValue()));
     }
 
-    function startCounting(callback) {
+    function startCounting(callback: () => void): void {
         shouldCount = true;
         count(callback, initialDelayMs);
     }
 
-    function count(callback, delayMs) {
+    function count(callback: () => void, delayMs: number): void {
         if (!shouldCount) return;
 
         callback();
@@ -196,7 +185,7 @@ document.addEventListener("DOMContentLoaded", function() {
         setTimeout(count.bind(null, callback, nextDelayMs), delayMs);
     }
 
-    function stopCounting() {
+    function stopCounting(): void {
         shouldCount = false;
     }
 
