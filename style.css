@@ -56,6 +56,17 @@ body {
             &.increment-entering { animation-name: appear-up; }
             &.decrement-leaving { animation-name: disappear-down; }
             &.decrement-entering { animation-name: appear-down; }
+
+            /* Firefox dev tools "ease-in-out backward" preset */
+            &.only-step { animation-timing-function: cubic-bezier(.68,-0.55,.27,1.55); }
+            /* Firefox dev tools "ease-in backward" preset */
+            &.first-step { animation-timing-function: cubic-bezier(.6,-0.28,.74,.05); }
+            /* Firefox dev tools "ease-out backward" preset */
+            &.last-step { animation-timing-function: cubic-bezier(.18,.89,.32,1.28); }
+            &.middle-step {
+                animation-timing-function: linear;
+                animation-duration: 50ms;
+            }
         }
     }
 
