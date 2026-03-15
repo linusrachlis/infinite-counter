@@ -27,6 +27,7 @@ document.addEventListener("DOMContentLoaded", function() {
     let transitionTimeoutId = null;
 
     const transitionStepDelayMs = 300;
+    const middleTransitionStepDelayMs = 50;
     let shouldCount = false;
     const initialDelayMs = 600;
     const delayDecayFactor = 0.8;
@@ -55,11 +56,15 @@ document.addEventListener("DOMContentLoaded", function() {
         Take transitionalValue one more step in the direction of the currentValue,
         and animate.
 
+        @param isFirstStep {boolean}
+
         @return void
     */
-    function stepTowardsCurrentValue() {
+    function stepTowardsCurrentValue(isFirstStep) {
         // TODO: handle negative sign separately when number length is
         // changing (maybe have it slide over)
+
+        // TODO: visualize discarding the remainder on division
 
         /** @type number */
         let nextValue;
@@ -120,24 +125,50 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         const animationClassPrefix = nextValue > transitionalValue ? "increment" : "decrement";
+        const isLastStep = nextValue === currentValue;
+        const additionalClassNames = [];
+
+        if (isFirstStep && isLastStep) {
+            additionalClassNames.push("only-step");
+        } else if (isFirstStep) {
+            additionalClassNames.push("first-step");
+        } else if (isLastStep) {
+            additionalClassNames.push("last-step");
+        } else {
+            additionalClassNames.push("middle-step");
+        }
+
         const digitsEnteringElem = createElementWithTextContent("div", digitsEntering.join(""));
-        digitsEnteringElem.classList.add(`${animationClassPrefix}-entering`);
+        digitsEnteringElem.classList.add(
+            `${animationClassPrefix}-entering`,
+            ...additionalClassNames
+        );
+
         const digitsStayingElem = createElementWithTextContent("div", digitsStaying.join(""));
+
         const digitsLeavingElem = createElementWithTextContent("div", digitsLeaving.join(""));
-        digitsLeavingElem.classList.add(`${animationClassPrefix}-leaving`);
+        digitsLeavingElem.classList.add(
+            `${animationClassPrefix}-leaving`,
+            ...additionalClassNames
+        );
 
         counterContainer.replaceChildren(digitsEnteringElem, digitsStayingElem, digitsLeavingElem);
-        transitionalValue = nextValue;
 
+        transitionalValue = nextValue;
         if (transitionalValue !== currentValue) {
-            transitionTimeoutId = setTimeout(stepTowardsCurrentValue, transitionStepDelayMs);
+            const stepDelay = (isFirstStep || isLastStep) ? transitionStepDelayMs : middleTransitionStepDelayMs;
+            transitionTimeoutId = setTimeout(
+                stepTowardsCurrentValue,
+                stepDelay,
+                false
+            );
         }
     }
 
     function updateCurrentValue(newValue) {
         currentValue = newValue;
         if (transitionTimeoutId) clearTimeout(transitionTimeoutId);
-        transitionTimeoutId = setTimeout(stepTowardsCurrentValue, transitionStepDelayMs);
+        stepTowardsCurrentValue(true);
     }
 
     function addToValue(mult) {
