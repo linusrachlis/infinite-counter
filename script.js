@@ -1,7 +1,32 @@
 "use strict";
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", function() {
+    /**
+     * Tracks the current amount for the purpose of the next requested
+     * mathematical operation
+     *
+     * @type number
+     */
     let currentValue = 0;
-    let transitionalValue = 0;
+
+    /**
+        Track the currently displayed amount for the purpose of animating
+        between values (i.e. it changes incrementally when animating beteween
+        two values whose difference is >1).
+
+        Initially null.
+
+        @type number?
+     */
+    let transitionalValue = null;
+
+    /**
+     * Gets unset when timeout cleared
+     *
+     * @type number?
+     */
+    let transitionTimeoutId = null;
+
+    const transitionStepDelayMs = 300;
     let shouldCount = false;
     const initialDelayMs = 600;
     const delayDecayFactor = 0.8;
@@ -26,14 +51,36 @@ document.addEventListener("DOMContentLoaded", function () {
         return element;
     }
 
-    function updateCurrentValue(newValue) {
+    /**
+        Take transitionalValue one more step in the direction of the currentValue,
+        and animate.
+
+        @return void
+    */
+    function stepTowardsCurrentValue() {
         // TODO: handle negative sign separately when number length is
         // changing (maybe have it slide over)
 
+        /** @type number */
+        let nextValue;
+        if (transitionalValue === null) {
+            // Initialization
+            nextValue = transitionalValue = currentValue;
+        } else if (transitionalValue < currentValue) {
+            nextValue = transitionalValue + 1;
+        } else if (transitionalValue > currentValue) {
+            nextValue = transitionalValue - 1;
+        } else {
+            // Shoudn't happen, just for robustness
+            clearTimeout(transitionTimeoutId);
+            transitionTimeoutId = null;
+            return;
+        }
+
         // We reverse the digit arrays because we want to compare them
         // from lowest to highest place
-        const oldDigits = currentValue.toString().split("").reverse();
-        const newDigits = newValue.toString().split("").reverse();
+        const oldDigits = transitionalValue.toString().split("").reverse();
+        const newDigits = nextValue.toString().split("").reverse();
 
         // These 3 arrays must be kept the same size
         const digitsLeaving = [];
@@ -72,7 +119,7 @@ document.addEventListener("DOMContentLoaded", function () {
             digitsEntering.unshift("&nbsp;");
         }
 
-        const animationClassPrefix = newValue > currentValue ? "increment" : "decrement";
+        const animationClassPrefix = nextValue > transitionalValue ? "increment" : "decrement";
         const digitsEnteringElem = createElementWithTextContent("div", digitsEntering.join(""));
         digitsEnteringElem.classList.add(`${animationClassPrefix}-entering`);
         const digitsStayingElem = createElementWithTextContent("div", digitsStaying.join(""));
@@ -80,7 +127,17 @@ document.addEventListener("DOMContentLoaded", function () {
         digitsLeavingElem.classList.add(`${animationClassPrefix}-leaving`);
 
         counterContainer.replaceChildren(digitsEnteringElem, digitsStayingElem, digitsLeavingElem);
+        transitionalValue = nextValue;
+
+        if (transitionalValue !== currentValue) {
+            transitionTimeoutId = setTimeout(stepTowardsCurrentValue, transitionStepDelayMs);
+        }
+    }
+
+    function updateCurrentValue(newValue) {
         currentValue = newValue;
+        if (transitionTimeoutId) clearTimeout(transitionTimeoutId);
+        transitionTimeoutId = setTimeout(stepTowardsCurrentValue, transitionStepDelayMs);
     }
 
     function addToValue(mult) {
@@ -112,7 +169,7 @@ document.addEventListener("DOMContentLoaded", function () {
         shouldCount = false;
     }
 
-    document.addEventListener("pointerdown", function (e) {
+    document.addEventListener("pointerdown", function(e) {
         switch (e.target) {
             case plusButton:
                 startCounting(addToValue.bind(null, 1));
@@ -129,10 +186,10 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    document.addEventListener("pointerup", function (e) {stopCounting();});
-    document.addEventListener("pointercancel", function (e) {stopCounting();});
+    document.addEventListener("pointerup", function(e) { stopCounting(); });
+    document.addEventListener("pointercancel", function(e) { stopCounting(); });
 
-    document.addEventListener("keydown", function (e) {
+    document.addEventListener("keydown", function(e) {
         switch (e.key) {
             case "0":
             case "1":
