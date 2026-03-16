@@ -22,9 +22,9 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Related to transition animations
     const transitionFirstOrLastStepDelayMs = 400;
-    const transitionStepInitialDelayMs = 100;
-    const transitionStepDelayDecayFactor = 0.95;
     const transitionStepMinDelayMs = 10;
+    const transitionStepMaxDelayMs = 100;
+    const transitionStepAccelPerStep = 1;
 
     // Related to when you hold down the pointer on one of the GUI buttons
     let pointerHoldShouldCount = false;
@@ -55,12 +55,10 @@ document.addEventListener("DOMContentLoaded", function() {
         Take transitionalValue one more step in the direction of the currentValue,
         and animate.
 
-        @param isFirstStep
-        @param adjustedDelayMs If this is a middle step (neither the first nor
-        the last), this is used as the duration for the animation and the delay
-        before the next step.
+        @param totalSteps
+        @param stepNumber Starts at zero
     */
-    function stepTowardsCurrentValue(isFirstStep: boolean, adjustedDelayMs: number): void {
+    function stepTowardsCurrentValue(totalSteps: number, stepNumber: number): void {
         // TODO: use an ease-in-out function for the step delays on long
         // transitions so it also slows down towards the end
 
@@ -127,10 +125,8 @@ document.addEventListener("DOMContentLoaded", function() {
         }
 
         const animationClassPrefix = nextValue > transitionalValue ? "increment" : "decrement";
+        const isFirstStep = stepNumber === 0;
         const isLastStep = nextValue === currentValue;
-
-        // Default to current delay
-        let nextDelayMs: number = adjustedDelayMs;
 
         const digitsEnteringElem = createElementWithTextContent("div", digitsEntering.join(""));
         digitsEnteringElem.classList.add(`${animationClassPrefix}-entering`);
@@ -143,6 +139,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 callback(elem);
             }
         }
+
+        let animationDuration: number;
 
         if (isFirstStep && isLastStep) {
             doForAnimatingDigitGroups(elem => {
@@ -157,12 +155,25 @@ document.addEventListener("DOMContentLoaded", function() {
                 elem.classList.add("last-step");
             });
         } else {
-            // If this is a middle step, decrease the delay
-            nextDelayMs = Math.max(transitionStepMinDelayMs, adjustedDelayMs * transitionStepDelayDecayFactor);
+            const getAnimationDuration = (): number => {
+                const distanceFromEnd = totalSteps - (stepNumber + 1);
+                const distanceFromStartOrEnd = Math.min(stepNumber, distanceFromEnd);
 
+                return Math.max(
+                    transitionStepMinDelayMs,
+                    transitionStepMaxDelayMs - transitionStepAccelPerStep * distanceFromStartOrEnd
+                );
+            };
+            animationDuration = getAnimationDuration();
+            const getGraph = (duration: number): string => {
+                let result = "";
+                for (let i = 0; i < duration; i++) result += "-";
+                return result;
+            };
+            console.log(`Step ${stepNumber} / ${totalSteps - 1} | ${getGraph(animationDuration)}`);
             doForAnimatingDigitGroups(elem => {
                 elem.classList.add("middle-step");
-                elem.style.animationDuration = `${adjustedDelayMs}ms`;
+                elem.style.animationDuration = `${animationDuration}ms`;
             });
         }
 
@@ -170,20 +181,21 @@ document.addEventListener("DOMContentLoaded", function() {
 
         transitionalValue = nextValue;
         if (transitionalValue !== currentValue) {
-            const stepDelay = (isFirstStep || isLastStep) ? transitionFirstOrLastStepDelayMs : adjustedDelayMs;
+            const stepDelay = (isFirstStep || isLastStep) ? transitionFirstOrLastStepDelayMs : animationDuration;
             transitionTimeoutId = setTimeout(
                 stepTowardsCurrentValue,
                 stepDelay,
-                false,
-                nextDelayMs
+                totalSteps,
+                stepNumber + 1
             );
         }
     }
 
     function updateCurrentValue(newValue: number): void {
+        const totalSteps = Math.abs(newValue - currentValue);
         currentValue = newValue;
         if (transitionTimeoutId) clearTimeout(transitionTimeoutId);
-        stepTowardsCurrentValue(true, transitionStepInitialDelayMs);
+        stepTowardsCurrentValue(totalSteps, 0);
     }
 
     function addToValue(mult: number): void {
